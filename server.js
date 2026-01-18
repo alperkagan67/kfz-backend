@@ -4,6 +4,9 @@ import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+// Routes
+import authRoutes from './routes/auth.js'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -12,6 +15,9 @@ const port = 3000
 
 app.use(cors())
 app.use(express.json())
+
+// Auth Routes (KAN-2)
+app.use('/api/auth', authRoutes)
 
 // Temporary in-memory storage
 const vehicles = []
