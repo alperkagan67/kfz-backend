@@ -2,6 +2,7 @@
  * Authentication Routes
  *
  * KAN-2: User Authentication API
+ * @module routes/auth
  *
  * Endpoints:
  * - POST /api/auth/register - Register new user
