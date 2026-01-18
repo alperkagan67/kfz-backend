@@ -44,6 +44,86 @@ export function getAllVehicles() {
   }))
 }
 
+/**
+ * Get paginated and filtered vehicles
+ * KFZ-13: Pagination & Filter API
+ */
+export function getVehiclesPaginated(options = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    brand,
+    minPrice,
+    maxPrice,
+    minYear,
+    maxYear,
+    sortBy = 'createdAt',
+    order = 'desc'
+  } = options
+
+  // Validate and cap limit
+  const safeLimit = Math.min(Math.max(1, parseInt(limit) || 10), 100)
+  const safePage = Math.max(1, parseInt(page) || 1)
+  const offset = (safePage - 1) * safeLimit
+
+  // Build WHERE clause dynamically
+  const conditions = []
+  const params = []
+
+  if (brand) {
+    conditions.push('LOWER(brand) LIKE LOWER(?)')
+    params.push(`%${brand}%`)
+  }
+  if (minPrice !== undefined) {
+    conditions.push('price >= ?')
+    params.push(parseFloat(minPrice))
+  }
+  if (maxPrice !== undefined) {
+    conditions.push('price <= ?')
+    params.push(parseFloat(maxPrice))
+  }
+  if (minYear !== undefined) {
+    conditions.push('year >= ?')
+    params.push(parseInt(minYear))
+  }
+  if (maxYear !== undefined) {
+    conditions.push('year <= ?')
+    params.push(parseInt(maxYear))
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  // Validate sort column
+  const validSortColumns = ['createdAt', 'price', 'year', 'mileage', 'brand', 'model']
+  const safeSortBy = validSortColumns.includes(sortBy) ? sortBy : 'createdAt'
+  const safeOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+
+  // Get total count
+  const countQuery = `SELECT COUNT(*) as total FROM vehicles ${whereClause}`
+  const countResult = db.prepare(countQuery).get(...params)
+  const total = countResult.total
+
+  // Get paginated results
+  const dataQuery = `
+    SELECT * FROM vehicles
+    ${whereClause}
+    ORDER BY ${safeSortBy} ${safeOrder}
+    LIMIT ? OFFSET ?
+  `
+  const vehicles = db.prepare(dataQuery).all(...params, safeLimit, offset)
+
+  return {
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit),
+    vehicles: vehicles.map(v => ({
+      ...v,
+      images: v.images ? JSON.parse(v.images) : []
+    }))
+  }
+}
+
 export function getVehicleById(id) {
   const vehicle = findByIdStmt.get(id)
   if (vehicle) {
@@ -100,6 +180,7 @@ export function clearVehicles() {
 
 export default {
   getAllVehicles,
+  getVehiclesPaginated,
   getVehicleById,
   addVehicle,
   updateVehicle,

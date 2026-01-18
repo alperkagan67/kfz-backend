@@ -18,6 +18,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import {
   getAllVehicles,
+  getVehiclesPaginated,
   getVehicleById,
   addVehicle,
   updateVehicle,
@@ -44,11 +45,41 @@ const upload = multer({ storage: storage })
 
 /**
  * GET /api/vehicles
- * List all vehicles
+ * List vehicles with optional pagination and filters
+ * KFZ-13: Pagination & Filter API
+ *
+ * Query params:
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 10, max: 100)
+ * - brand: Filter by brand (partial match)
+ * - minPrice, maxPrice: Price range filter
+ * - minYear, maxYear: Year range filter
+ * - sortBy: Sort column (createdAt, price, year, mileage)
+ * - order: Sort order (asc, desc)
  */
 router.get('/', (req, res) => {
-  const vehicles = getAllVehicles()
-  res.json(vehicles)
+  const { page, limit, brand, minPrice, maxPrice, minYear, maxYear, sortBy, order } = req.query
+
+  // If no pagination params, return all (backwards compatible)
+  if (!page && !limit && !brand && !minPrice && !maxPrice && !minYear && !maxYear) {
+    const vehicles = getAllVehicles()
+    return res.json(vehicles)
+  }
+
+  // Return paginated results
+  const result = getVehiclesPaginated({
+    page,
+    limit,
+    brand,
+    minPrice,
+    maxPrice,
+    minYear,
+    maxYear,
+    sortBy,
+    order
+  })
+
+  res.json(result)
 })
 
 /**
