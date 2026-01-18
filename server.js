@@ -57,6 +57,11 @@ app.post('/api/inquiries', (req, res) => {
   res.status(201).json({ message: 'Inquiry received' })
 })
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`)
-})
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`)
+  })
+}
+
+export default app
