@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url'
 
 // Routes
 import authRoutes from './routes/auth.js'
+// Seeding
+import { seedUsers } from './scripts/seed.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -59,8 +61,12 @@ app.post('/api/inquiries', (req, res) => {
 
 // Only start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`)
+  // Seed test users on startup (for development)
+  seedUsers().then(() => {
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`)
+      console.log('Test users: admin@test.com / test123')
+    })
   })
 }
 
