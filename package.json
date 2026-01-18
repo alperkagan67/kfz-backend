@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
@@ -25,9 +26,18 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "moduleFileExtensions": ["js", "mjs"],
-    "testMatch": ["**/*.test.js"],
-    "collectCoverageFrom": ["**/*.js", "!node_modules/**", "!coverage/**"]
+    "moduleFileExtensions": [
+      "js",
+      "mjs"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!node_modules/**",
+      "!coverage/**"
+    ]
   },
   "keywords": [],
   "author": "",

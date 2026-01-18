@@ -299,13 +299,25 @@ jobs:
           node --check server.js
           echo "Syntax check passed"
 
-          # Check for test script
-          if npm run test --if-present 2>/dev/null; then
+          # Run Jest tests with coverage
+          if npm test -- --coverage --coverageReporters=text --coverageReporters=json-summary 2>&1 | tee test_output.txt; then
+            TOTAL_TESTS=$(grep -oP '(\d+) passed' test_output.txt | head -1 | grep -oP '\d+' || echo "0")
             echo "tests_passed=true" >> $GITHUB_OUTPUT
-            echo "test_output=All tests passed" >> $GITHUB_OUTPUT
+            echo "test_output=✅ $TOTAL_TESTS tests passed" >> $GITHUB_OUTPUT
+            echo "test_count=$TOTAL_TESTS" >> $GITHUB_OUTPUT
           else
-            echo "tests_passed=true" >> $GITHUB_OUTPUT
-            echo "test_output=Syntax check passed (no tests defined)" >> $GITHUB_OUTPUT
+            FAILED=$(grep -oP '(\d+) failed' test_output.txt | head -1 | grep -oP '\d+' || echo "0")
+            echo "tests_passed=false" >> $GITHUB_OUTPUT
+            echo "test_output=❌ $FAILED tests failed" >> $GITHUB_OUTPUT
+            echo "test_count=0" >> $GITHUB_OUTPUT
+          fi
+
+          # Extract coverage percentage
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct' || echo "0")
+            echo "code_coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "code_coverage=N/A" >> $GITHUB_OUTPUT
           fi
 
       - name: Generate QA Report
@@ -430,6 +442,9 @@ jobs:
               ? '**All checks passed! This PR is ready for review.**'
               : '**Acceptance Criteria coverage is below 70%. Please add more tests.**';
 
+            const codeCoverage = '${{ steps.tests.outputs.code_coverage }}' || 'N/A';
+            const testCount = '${{ steps.tests.outputs.test_count }}' || '0';
+
             const lines = [
               '## ' + emoji + ' NexusFlow QA Automation - ' + status,
               '',
@@ -443,7 +458,8 @@ jobs:
               p + ' Check ' + p + ' Status ' + p,
               p + '-------' + p + '--------' + p,
               p + ' Syntax ' + p + ' \u2705 Passed ' + p,
-              p + ' Tests ' + p + ' ' + testOutput + ' ' + p,
+              p + ' Unit Tests ' + p + ' ' + testOutput + ' ' + p,
+              p + ' Code Coverage ' + p + ' ' + codeCoverage + '% ' + p,
               p + ' AC Coverage ' + p + ' ' + coverage + '% ' + p,
               acTable,
               '### Verdict',

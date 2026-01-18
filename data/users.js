@@ -1,32 +1,53 @@
 /**
- * Centralized User Storage
+ * User Data Access Layer
  *
- * In-memory user storage for development.
- * In production, this would be replaced with a database.
+ * KFZ-5: SQLite Integration
+ * Provides user CRUD operations with SQLite backend.
  */
 
-// In-memory user storage
-const users = []
+import db from '../db/database.js'
+
+// Prepared statements for performance
+const insertUserStmt = db.prepare(`
+  INSERT INTO users (id, email, password, name, role, createdAt)
+  VALUES (@id, @email, @password, @name, @role, @createdAt)
+`)
+
+const findByEmailStmt = db.prepare(`
+  SELECT * FROM users WHERE LOWER(email) = LOWER(?)
+`)
+
+const findByIdStmt = db.prepare(`
+  SELECT * FROM users WHERE id = ?
+`)
+
+const getAllUsersStmt = db.prepare(`
+  SELECT * FROM users
+`)
+
+const deleteAllUsersStmt = db.prepare(`
+  DELETE FROM users
+`)
 
 export function getUsers() {
-  return users
+  return getAllUsersStmt.all()
 }
 
 export function addUser(user) {
-  users.push(user)
+  insertUserStmt.run(user)
   return user
 }
 
 export function findUserByEmail(email) {
-  return users.find(u => u.email === email.toLowerCase())
+  return findByEmailStmt.get(email.toLowerCase())
 }
 
 export function findUserById(id) {
-  return users.find(u => u.id === id)
+  return findByIdStmt.get(id)
 }
 
 export function clearUsers() {
-  users.length = 0
+  deleteAllUsersStmt.run()
 }
 
 export default {
