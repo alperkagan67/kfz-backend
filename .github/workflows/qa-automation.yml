@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to run QA on'
+        required: true
+        type: number
 
 permissions:
   contents: read
@@ -166,38 +172,39 @@ jobs:
             const jiraSummary = '${{ steps.jira_details.outputs.summary }}' || 'N/A';
             const approved = '${{ steps.report.outputs.qa_approved }}' === 'true';
             const testOutput = '${{ steps.tests.outputs.test_output }}' || 'N/A';
-
             const emoji = approved ? '✅' : '❌';
             const status = approved ? 'PASSED' : 'FAILED';
-
-            const body = `## ${emoji} NexusFlow QA Automation - ${status}
-
-### Jira Ticket
-| Field | Value |
-|-------|-------|
-| Key | [${jiraKey}](https://alperkagan.atlassian.net/browse/${jiraKey}) |
-| Summary | ${jiraSummary} |
-
-### Test Results
-| Check | Status |
-|-------|--------|
-| Syntax | ✅ Passed |
-| Tests | ${testOutput} |
-
-### Verdict
-${approved ? '**All checks passed! This PR is ready for review.**' : '**Some checks failed. Please fix the issues.**'}
-
----
-*Automated by NexusFlow QA - Zero Human Interaction*`;
-
+            const verdict = approved ? '**All checks passed! This PR is ready for review.**' : '**Some checks failed. Please fix the issues.**';
+            const jiraUrl = 'https://alperkagan.atlassian.net/browse/' + jiraKey;
+            const pipe = String.fromCharCode(124);
+            const lines = [
+              '## ' + emoji + ' NexusFlow QA Automation - ' + status,
+              '',
+              '### Jira Ticket',
+              pipe + ' Field ' + pipe + ' Value ' + pipe,
+              pipe + '-------' + pipe + '-------' + pipe,
+              pipe + ' Key ' + pipe + ' [' + jiraKey + '](' + jiraUrl + ') ' + pipe,
+              pipe + ' Summary ' + pipe + ' ' + jiraSummary + ' ' + pipe,
+              '',
+              '### Test Results',
+              pipe + ' Check ' + pipe + ' Status ' + pipe,
+              pipe + '-------' + pipe + '--------' + pipe,
+              pipe + ' Syntax ' + pipe + ' ✅ Passed ' + pipe,
+              pipe + ' Tests ' + pipe + ' ' + testOutput + ' ' + pipe,
+              '',
+              '### Verdict',
+              verdict,
+              '',
+              '---',
+              '*Automated by NexusFlow QA - Zero Human Interaction*'
+            ];
+            const body = lines.join('\n');
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number
             });
-
             const existing = comments.data.find(c => c.body.includes('NexusFlow QA Automation'));
-
             if (existing) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
