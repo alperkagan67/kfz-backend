@@ -4,6 +4,7 @@ import cors from 'cors'
 // Routes
 import authRoutes from './routes/auth.js'
 import vehicleRoutes from './routes/vehicles.js'
+import inquiryRoutes from './routes/inquiries.js'
 // Seeding
 import { seedUsers } from './scripts/seed.js'
 
@@ -19,10 +20,8 @@ app.use('/api/auth', authRoutes)
 // Vehicle Routes (KFZ-5, KFZ-6)
 app.use('/api/vehicles', vehicleRoutes)
 
-// Inquiry endpoint
-app.post('/api/inquiries', (req, res) => {
-  res.status(201).json({ message: 'Inquiry received' })
-})
+// Inquiry Routes (KFZ-15)
+app.use('/api/inquiries', inquiryRoutes)
 
 // Only start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
