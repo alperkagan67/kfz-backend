@@ -14,11 +14,9 @@
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { getUsers, addUser, findUserByEmail, findUserById } from '../data/users.js'
 
 const router = express.Router()
-
-// In-memory user storage (replace with DB in production)
-const users = []
 
 // JWT Secret (should be in .env in production)
 const JWT_SECRET = process.env.JWT_SECRET || 'kfz-handelsplattform-secret-key-2025'
@@ -146,7 +144,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
+    const existingUser = findUserByEmail(email)
     if (existingUser) {
       return res.status(409).json({
         error: 'Registrierung fehlgeschlagen',
@@ -168,7 +166,7 @@ router.post('/register', async (req, res) => {
       createdAt: new Date().toISOString()
     }
 
-    users.push(user)
+    addUser(user)
 
     // Generate JWT token
     const token = jwt.sign(
@@ -224,7 +222,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = users.find(u => u.email === email.toLowerCase())
+    const user = findUserByEmail(email)
     if (!user) {
       recordLoginAttempt(email.toLowerCase(), false)
       return res.status(401).json({
@@ -290,7 +288,7 @@ router.post('/logout', authenticateToken, (req, res) => {
  * Get current authenticated user
  */
 router.get('/me', authenticateToken, (req, res) => {
-  const user = users.find(u => u.id === req.user.userId)
+  const user = findUserById(req.user.userId)
 
   if (!user) {
     return res.status(404).json({
