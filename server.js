@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 // Routes
 import authRoutes from './routes/auth.js'
+import vehicleRoutes from './routes/vehicles.js' // KFZ-28: Vehicle CRUD API
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -19,13 +20,13 @@ app.use(express.json())
 // Auth Routes (KAN-2)
 app.use('/api/auth', authRoutes)
 
-// Temporary in-memory storage
-const vehicles = []
+// Vehicle Routes (KFZ-28)
+app.use('/api/vehicles', vehicleRoutes)
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = req.path.includes('/admin') 
+    const uploadPath = req.path.includes('/admin')
       ? '../uploads/AdminUploads'
       : '../uploads/CustomerUploads'
     cb(null, path.join(__dirname, uploadPath))
@@ -36,21 +37,6 @@ const storage = multer.diskStorage({
 })
 
 const upload = multer({ storage: storage })
-
-// API Routes
-app.get('/api/vehicles', (req, res) => {
-  res.json(vehicles)
-})
-
-app.post('/api/vehicles', upload.array('images', 5), (req, res) => {
-  const vehicle = {
-    id: Date.now().toString(),
-    ...req.body,
-    images: req.files.map(file => file.filename)
-  }
-  vehicles.push(vehicle)
-  res.status(201).json(vehicle)
-})
 
 app.post('/api/inquiries', (req, res) => {
   // Handle vehicle inquiries
