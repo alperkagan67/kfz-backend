@@ -19,14 +19,31 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
     "supertest": "^6.3.4"
   },
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "moduleFileExtensions": ["js", "mjs"],
-    "testMatch": ["**/*.test.js"],
-    "collectCoverageFrom": ["**/*.js", "!node_modules/**", "!coverage/**"]
+    "moduleFileExtensions": [
+      "js",
+      "mjs"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!node_modules/**",
+      "!coverage/**"
+    ],
+    "reporters": [
+      "default",
+      ["jest-junit", {
+        "outputDirectory": ".",
+        "outputName": "junit.xml"
+      }]
+    ]
   },
   "keywords": [],
   "author": "",
